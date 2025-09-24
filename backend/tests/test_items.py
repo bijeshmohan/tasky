@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
 import pytest
@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from sqlmodel import SQLModel, Session, create_engine
 from sqlalchemy.pool import StaticPool
 
-from api.common import Status, Priority
+from api.common import Status, Priority, Type
 from api.main import app, get_session
 from api.schemas import ItemRead
 
@@ -60,6 +60,7 @@ def test_create_item_with_mandatory_fields(client: TestClient):
     validated = ItemRead(**r.json())
     assert validated.summary == summary
     assert validated.description is None
+    assert validated.type == Type.TASK
     assert validated.priority == Priority.MEDIUM
     assert validated.due is None
     assert validated.status == Status.TODO
@@ -68,13 +69,15 @@ def test_create_item_with_mandatory_fields(client: TestClient):
 def test_create_item_with_optional_fields(client: TestClient):
     summary = "lorem ipsum"
     description = "The quick brown fox jumps over the lazy dog"
+    type = "bug"
     priority = 1
-    due = "2024-12-31T23:59:59"
+    due = (datetime.now() + timedelta(days=7)).isoformat()
     r = client.post(
         "/items",
         json={
             "summary": summary,
             "description": description,
+            "type": type,
             "priority": priority,
             "due": due
         }
@@ -83,6 +86,7 @@ def test_create_item_with_optional_fields(client: TestClient):
     validated = ItemRead(**r.json())
     assert validated.summary == summary
     assert validated.description == description
+    assert validated.type == Type.BUG
     assert validated.priority == Priority.HIGH
     assert validated.due == datetime.fromisoformat(due)
     assert validated.status == Status.TODO
@@ -95,6 +99,7 @@ def test_read_item(client: TestClient, item: dict):
     assert validated.id == UUID(item["id"])
     assert validated.summary == item["summary"]
     assert validated.description == item["description"]
+    assert validated.type == Type(item["type"])
     assert validated.priority == Priority(item["priority"])
     assert validated.due == (datetime.fromisoformat(item["due"]) if item["due"] else None)
     assert validated.status == Status(item["status"])
@@ -119,6 +124,7 @@ def test_read_items(client: TestClient, items: list[dict]):
         assert validated.id == UUID(item["id"])
         assert validated.summary == item["summary"]
         assert validated.description == item["description"]
+        assert validated.type == Type(item["type"])
         assert validated.priority == Priority(item["priority"])
         assert validated.due == (datetime.fromisoformat(item["due"]) if item["due"] else None)
         assert validated.status == Status(item["status"])
