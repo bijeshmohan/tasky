@@ -8,7 +8,7 @@ from sqlalchemy.pool import StaticPool
 
 from api.common import Status, Priority, Type
 from api.main import app, get_session
-from api.schemas import ItemRead
+from api.schemas.item import ItemRead
 
 
 @pytest.fixture

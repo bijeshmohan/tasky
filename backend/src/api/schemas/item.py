@@ -3,7 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
-from .common import Priority, Status, Type
+from ..common import Priority, Status, Type
 
 
 class ItemBase(BaseModel):

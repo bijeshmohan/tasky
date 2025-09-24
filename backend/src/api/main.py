@@ -5,8 +5,8 @@ from fastapi import FastAPI, HTTPException, Depends
 from sqlmodel import SQLModel, Session, create_engine, select
 
 from .common import Priority, Status
-from .models import Item
-from .schemas import ItemCreate, ItemRead, ItemUpdate
+from .models.item import Item
+from .schemas.item import ItemCreate, ItemRead, ItemUpdate
 
 
 DATABASE = "sqlite:///./items.db"

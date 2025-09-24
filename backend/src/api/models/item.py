@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 
 from sqlmodel import SQLModel, Field
 
-from .common import Priority, Status, Type
+from ..common import Priority, Status, Type
 
 
 class Item(SQLModel, table=True):
