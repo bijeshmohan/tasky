@@ -3,59 +3,66 @@ from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlmodel import SQLModel, Session, create_engine
-from sqlalchemy.pool import StaticPool
 
 from api.common import Status, Priority, Type
-from api.main import app, get_session
 from api.schemas.item import ItemRead
 
 
 @pytest.fixture
-def session():
-    engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool
+def credentials(client: TestClient):
+    data = {"username": "alice", "password": "secret"}
+
+    r = client.post(
+        "/users",
+        json=data
     )
-    SQLModel.metadata.create_all(engine)
-    with Session(engine) as s:
-        yield s
+    assert r.status_code == 201
+    return data
 
 
 @pytest.fixture
-def client(session: Session):
-    def get_session_override():
-        return session
-    
-    app.dependency_overrides[get_session] = get_session_override
-    c = TestClient(app)
-    yield c
-    app.dependency_overrides.clear()
+def token(client: TestClient, credentials: dict):
+    r = client.post(
+        "/auth/token",
+        data={
+            "username": credentials["username"],
+            "password": credentials["password"]
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    assert r.status_code == 200, r.text
+    t = r.json()["token"]
+    assert t and isinstance(t, str)
+    return t
 
 
 @pytest.fixture
-def item(client: TestClient):
-    r = client.post("/items", json={"summary": "lorem ipsum"})
+def header(token: str):
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def item(client: TestClient, header: dict):
+    r = client.post("/items", json={"summary": "lorem ipsum"}, headers=header)
     if r.status_code != 201:
         raise RuntimeError("Unable to create Item!")
     return r.json()
 
 
 @pytest.fixture
-def items(client: TestClient):
+def items(client: TestClient, header: dict):
     items = []
     for i in range(5):
-        r = client.post("/items", json={"summary": f"lorem ipsum {i}"})
+        r = client.post("/items", json={"summary": f"lorem ipsum {i}"}, headers=header)
         if r.status_code != 201:
             raise RuntimeError("Unable to create Item!")
         items.append(r.json())
     return items
 
 
-def test_create_item_with_mandatory_fields(client: TestClient):
+def test_create_item_with_mandatory_fields(client: TestClient, header: dict):
     summary = "lorem ipsum"
-    r = client.post("/items", json={"summary": summary})
+    r = client.post("/items", json={"summary": summary}, headers=header)
     assert r.status_code == 201
     validated = ItemRead(**r.json())
     assert validated.summary == summary
@@ -66,7 +73,7 @@ def test_create_item_with_mandatory_fields(client: TestClient):
     assert validated.status == Status.TODO
 
 
-def test_create_item_with_optional_fields(client: TestClient):
+def test_create_item_with_optional_fields(client: TestClient, header: dict):
     summary = "lorem ipsum"
     description = "The quick brown fox jumps over the lazy dog"
     type = "bug"
@@ -80,7 +87,8 @@ def test_create_item_with_optional_fields(client: TestClient):
             "type": type,
             "priority": priority,
             "due": due
-        }
+        },
+        headers=header
     )
     assert r.status_code == 201
     validated = ItemRead(**r.json())
@@ -92,8 +100,8 @@ def test_create_item_with_optional_fields(client: TestClient):
     assert validated.status == Status.TODO
 
 
-def test_read_item(client: TestClient, item: dict):
-    r = client.get(f"/items/{item['id']}")
+def test_read_item(client: TestClient, item: dict, header: dict):
+    r = client.get(f"/items/{item['id']}", headers=header)
     assert r.status_code == 200
     validated = ItemRead(**r.json())
     assert validated.id == UUID(item["id"])
@@ -106,16 +114,16 @@ def test_read_item(client: TestClient, item: dict):
     assert validated.created == datetime.fromisoformat(item["created"])
 
 
-def test_read_unavailable_item(client: TestClient):
+def test_read_unavailable_item(client: TestClient, header: dict):
     id = uuid4()
-    r = client.get(f"/items/{id}")
+    r = client.get(f"/items/{id}", headers=header)
     assert r.status_code == 404
     data = r.json()
     assert data["detail"] == f"Work Item {id} NOT FOUND!"
 
 
-def test_read_items(client: TestClient, items: list[dict]):
-    r = client.get("/items")
+def test_read_items(client: TestClient, items: list[dict], header: dict):
+    r = client.get("/items", headers=header)
     assert r.status_code == 200
     data = r.json()
     assert len(data) == len(items)
@@ -131,31 +139,39 @@ def test_read_items(client: TestClient, items: list[dict]):
         assert validated.created == datetime.fromisoformat(item["created"])
 
 
-def test_update_item(client: TestClient, item: dict):
+def test_update_item(client: TestClient, item: dict, header: dict):
     update = "foo bar"
-    r = client.patch(f"/items/{item['id']}", json={"summary": update})
+    r = client.patch(
+        f"/items/{item['id']}",
+        json={"summary": update},
+        headers=header
+    )
     assert r.status_code == 200
     validated = ItemRead(**r.json())
     assert validated.summary == update
     # TODO: validate other fields remain unchanged
 
 
-def test_update_unavailable_item(client: TestClient):
+def test_update_unavailable_item(client: TestClient, header: dict):
     id = uuid4()
-    r = client.patch(f"/items/{id}", json={"summary": "foo bar"})
+    r = client.patch(
+        f"/items/{id}",
+        json={"summary": "foo bar"},
+        headers=header
+    )
     assert r.status_code == 404
     data = r.json()
     assert data["detail"] == f"Work Item {id} NOT FOUND!"
 
 
-def test_delete_item(client: TestClient, item: dict):
-    r = client.delete(f"/items/{item['id']}")
+def test_delete_item(client: TestClient, item: dict, header: dict):
+    r = client.delete(f"/items/{item['id']}", headers=header)
     assert r.status_code == 204
 
 
-def test_delete_unavailable_item(client: TestClient):
+def test_delete_unavailable_item(client: TestClient, header: dict):
     id = uuid4()
-    r = client.delete(f"/items/{id}")
+    r = client.delete(f"/items/{id}", headers=header)
     assert r.status_code == 404
     data = r.json()
     assert data["detail"] == f"Work Item {id} NOT FOUND!"

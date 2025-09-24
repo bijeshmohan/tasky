@@ -2,10 +2,10 @@ from enum import Enum
 
 
 class Status(Enum):
-    TODO: int = "todo"
-    DOING: int = "doing"
-    BLOCKED: int = "blocked"
-    DONE: int = "done"
+    TODO: str = "todo"
+    DOING: str = "doing"
+    BLOCKED: str = "blocked"
+    DONE: str = "done"
 
 
 class Priority(Enum):
@@ -17,6 +17,7 @@ class Priority(Enum):
 class Type(Enum):
     EPIC: str = "epic"
     FEATURE: str = "feature"
+    SPIKE: str = "spike"
     STORY: str = "story"
     TASK: str = "task"
     BUG: str = "bug"
