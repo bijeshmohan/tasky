@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 @pytest.fixture
 def credentials(client: TestClient):
-    data = {"username": "alice", "password": "secret"}
+    data = {"username": "alice", "password": "p@55W0rd"}
 
     r = client.post(
         "/users",

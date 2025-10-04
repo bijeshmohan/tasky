@@ -5,7 +5,7 @@ from api.schemas.user import UserRead
 
 def test_signup(client: TestClient):
     username = "alice"
-    password = "secret"
+    password = "p@55W0rd"
     r = client.post(
         "/users",
         json={"username": username, "password": password}
@@ -19,7 +19,7 @@ def test_signup(client: TestClient):
 
 def test_signup_with_short_username(client: TestClient):
     username = "un"
-    password = "secret"
+    password = "p@55W0rd"
     r = client.post(
         "/users",
         json={"username": username, "password": password}
@@ -29,6 +29,16 @@ def test_signup_with_short_username(client: TestClient):
 
 def test_signup_with_long_username(client: TestClient):
     username = "blahblahblahblahblahh"
+    password = "p@55W0rd"
+    r = client.post(
+        "/users",
+        json={"username": username, "password": password}
+    )
+    assert r.status_code == 422
+
+
+def test_signup_with_weak_password(client: TestClient):
+    username = "alice"
     password = "secret"
     r = client.post(
         "/users",

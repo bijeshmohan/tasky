@@ -10,7 +10,7 @@ from api.schemas.item import ItemRead
 
 @pytest.fixture
 def credentials(client: TestClient):
-    data = {"username": "alice", "password": "secret"}
+    data = {"username": "alice", "password": "p@55W0rd"}
 
     r = client.post(
         "/users",

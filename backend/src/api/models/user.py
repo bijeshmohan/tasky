@@ -8,7 +8,7 @@ from sqlmodel import SQLModel, Field
 class User(SQLModel, table=True):
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     username: str = Field(index=True, unique=True, min_length=3, max_length=20)
-    hashword: str = Field(max_length=100)
+    hashword: str
     created: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     @field_validator("username")
