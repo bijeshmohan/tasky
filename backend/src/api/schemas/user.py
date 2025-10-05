@@ -11,9 +11,18 @@ class UserBase(BaseModel):
     @field_validator("username")
     @classmethod
     def validate_username(cls, v: str):
-        if not v.replace('_', '').isalnum():
-            raise ValueError("Username must contain only alphanumeric characters and underscores")
-        return v.lower()
+        v = v.lower()
+
+        if not re.match(r'^[a-z0-9_]+$', v):
+            raise ValueError('Username can only contain letters, numbers, and underscores')
+
+        if not re.search(r'[a-z]', v):
+            raise ValueError('Username must contain at least one letter')
+
+        if not v[0].isalpha():
+            raise ValueError('Username must start with a letter')
+
+        return v
 
 
 class UserCreate(UserBase):
