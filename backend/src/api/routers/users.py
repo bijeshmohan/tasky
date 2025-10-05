@@ -15,7 +15,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 @router.post("/", response_model=UserRead, status_code=201)
 async def signup(data: UserCreate, session: Session = Depends(get_session)):
     if get_user_by_username(session, data.username):
-        HTTPException(status_code=400, detail="User already exists!")
+        raise HTTPException(status_code=400, detail="User already exists!")
 
     user = create_user(session, data)
     return user

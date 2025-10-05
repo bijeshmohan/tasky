@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 from api.schemas.user import UserRead
 
 
-def test_signup(client: TestClient):
+def test_signup_with_valid_username_and_strong_password(client: TestClient):
     username = "alice"
     password = "p@55W0rd"
     r = client.post(
@@ -17,7 +17,24 @@ def test_signup(client: TestClient):
     assert validated.created is not None
 
 
-def test_signup_with_short_username(client: TestClient):
+def test_signup_with_existing_username_and_strong_password(client: TestClient):
+    username = "alice"
+    password = "p@55W0rd"
+    r = client.post(
+        "/users",
+        json={"username": username, "password": password}
+    )
+
+    username = "alice"
+    password = "p@55W0rd123"
+    r = client.post(
+        "/users",
+        json={"username": username, "password": password}
+    )
+    assert r.status_code == 400
+
+
+def test_signup_with_short_username_and_strong_password(client: TestClient):
     username = "un"
     password = "p@55W0rd"
     r = client.post(
@@ -27,7 +44,7 @@ def test_signup_with_short_username(client: TestClient):
     assert r.status_code == 422
 
 
-def test_signup_with_long_username(client: TestClient):
+def test_signup_with_long_username_and_strong_password(client: TestClient):
     username = "blahblahblahblahblahh"
     password = "p@55W0rd"
     r = client.post(
@@ -37,9 +54,29 @@ def test_signup_with_long_username(client: TestClient):
     assert r.status_code == 422
 
 
-def test_signup_with_weak_password(client: TestClient):
+def test_signup_with_valid_username_and_short_password(client: TestClient):
     username = "alice"
-    password = "secret"
+    password = "p@55Wd#"
+    r = client.post(
+        "/users",
+        json={"username": username, "password": password}
+    )
+    assert r.status_code == 422
+
+
+def test_signup_with_valid_username_and_long_password(client: TestClient):
+    username = "alice"
+    password = "p@55Wd#" * 10
+    r = client.post(
+        "/users",
+        json={"username": username, "password": password}
+    )
+    assert r.status_code == 422
+
+
+def test_signup_with_valid_username_and_weak_password(client: TestClient):
+    username = "alice"
+    password = "password"
     r = client.post(
         "/users",
         json={"username": username, "password": password}
