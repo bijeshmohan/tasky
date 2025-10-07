@@ -26,3 +26,27 @@ def test_authenticate(client: TestClient, credentials: dict):
     assert r.status_code == 200, r.text
     tok = r.json()["token"]
     assert tok and isinstance(tok, str)
+
+
+def test_authenticate_with_incorrect_username(client: TestClient, credentials: dict):
+    r = client.post(
+        "/auth/token",
+        data={
+            "username": "alex",
+            "password": credentials["password"]
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    assert r.status_code == 400, r.text
+
+
+def test_authenticate_with_incorrect_password(client: TestClient, credentials: dict):
+    r = client.post(
+        "/auth/token",
+        data={
+            "username": credentials["username"],
+            "password": "P@ssW0rd"
+        },
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+    )
+    assert r.status_code == 400, r.text
