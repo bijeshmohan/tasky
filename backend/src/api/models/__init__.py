@@ -1,5 +1,5 @@
-from .item import Item
+from .task import Task
 from .user import User
 
 
-__all__ = [Item, User]
+__all__ = [Task, User]

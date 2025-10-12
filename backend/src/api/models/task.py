@@ -6,7 +6,7 @@ from sqlmodel import SQLModel, Field
 from ..common import Priority, Status
 
 
-class Item(SQLModel, table=True):
+class Task(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     uuid: UUID = Field(default_factory=uuid4, index=True)
     summary: str = Field(max_length=200)

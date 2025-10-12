@@ -6,24 +6,24 @@ from pydantic import BaseModel, Field
 from ..common import Priority, Status
 
 
-class ItemBase(BaseModel):
+class TaskBase(BaseModel):
     summary: str = Field(max_length=200)
     description: str | None = Field(default=None)
     priority: Priority = Field(default=Priority.MEDIUM)
     due: datetime | None = Field(default=None)
 
 
-class ItemCreate(ItemBase):
+class TaskCreate(TaskBase):
     ...
 
 
-class ItemRead(ItemBase):
+class TaskRead(TaskBase):
     uuid: UUID
     created: datetime
     status: Status
 
 
-class ItemUpdate(BaseModel):
+class TaskUpdate(BaseModel):
     summary: str | None = Field(default=None, max_length=200)
     description: str | None = Field(default=None)
     status: Status | None = Field(default=None)
