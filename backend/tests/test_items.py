@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from api.common import Status, Priority, Type
+from api.common import Status, Priority
 from api.schemas.item import ItemRead
 
 
@@ -67,7 +67,6 @@ def test_create_item_with_mandatory_fields(client: TestClient, header: dict):
     validated = ItemRead(**r.json())
     assert validated.summary == summary
     assert validated.description is None
-    assert validated.type == Type.TASK
     assert validated.priority == Priority.MEDIUM
     assert validated.due is None
     assert validated.status == Status.TODO
@@ -76,7 +75,6 @@ def test_create_item_with_mandatory_fields(client: TestClient, header: dict):
 def test_create_item_with_optional_fields(client: TestClient, header: dict):
     summary = "lorem ipsum"
     description = "The quick brown fox jumps over the lazy dog"
-    type = "bug"
     priority = 1
     due = (datetime.now() + timedelta(days=7)).isoformat()
     r = client.post(
@@ -84,7 +82,6 @@ def test_create_item_with_optional_fields(client: TestClient, header: dict):
         json={
             "summary": summary,
             "description": description,
-            "type": type,
             "priority": priority,
             "due": due
         },
@@ -94,20 +91,18 @@ def test_create_item_with_optional_fields(client: TestClient, header: dict):
     validated = ItemRead(**r.json())
     assert validated.summary == summary
     assert validated.description == description
-    assert validated.type == Type.BUG
     assert validated.priority == Priority.HIGH
     assert validated.due == datetime.fromisoformat(due)
     assert validated.status == Status.TODO
 
 
 def test_read_item(client: TestClient, item: dict, header: dict):
-    r = client.get(f"/items/{item['id']}", headers=header)
+    r = client.get(f"/items/{item['uuid']}", headers=header)
     assert r.status_code == 200
     validated = ItemRead(**r.json())
-    assert validated.id == UUID(item["id"])
+    assert validated.uuid == UUID(item["uuid"])
     assert validated.summary == item["summary"]
     assert validated.description == item["description"]
-    assert validated.type == Type(item["type"])
     assert validated.priority == Priority(item["priority"])
     assert validated.due == (datetime.fromisoformat(item["due"]) if item["due"] else None)
     assert validated.status == Status(item["status"])
@@ -115,11 +110,11 @@ def test_read_item(client: TestClient, item: dict, header: dict):
 
 
 def test_read_unavailable_item(client: TestClient, header: dict):
-    id = uuid4()
-    r = client.get(f"/items/{id}", headers=header)
+    uuid = uuid4()
+    r = client.get(f"/items/{uuid}", headers=header)
     assert r.status_code == 404
     data = r.json()
-    assert data["detail"] == f"Work Item {id} NOT FOUND!"
+    assert data["detail"] == f"Work Item {uuid} NOT FOUND!"
 
 
 def test_read_items(client: TestClient, items: list[dict], header: dict):
@@ -129,10 +124,9 @@ def test_read_items(client: TestClient, items: list[dict], header: dict):
     assert len(data) == len(items)
     for item in data:
         validated = ItemRead(**item)
-        assert validated.id == UUID(item["id"])
+        assert validated.uuid == UUID(item["uuid"])
         assert validated.summary == item["summary"]
         assert validated.description == item["description"]
-        assert validated.type == Type(item["type"])
         assert validated.priority == Priority(item["priority"])
         assert validated.due == (datetime.fromisoformat(item["due"]) if item["due"] else None)
         assert validated.status == Status(item["status"])
@@ -142,7 +136,7 @@ def test_read_items(client: TestClient, items: list[dict], header: dict):
 def test_update_item(client: TestClient, item: dict, header: dict):
     update = "foo bar"
     r = client.patch(
-        f"/items/{item['id']}",
+        f"/items/{item['uuid']}",
         json={"summary": update},
         headers=header
     )
@@ -165,13 +159,13 @@ def test_update_unavailable_item(client: TestClient, header: dict):
 
 
 def test_delete_item(client: TestClient, item: dict, header: dict):
-    r = client.delete(f"/items/{item['id']}", headers=header)
+    r = client.delete(f"/items/{item['uuid']}", headers=header)
     assert r.status_code == 204
 
 
 def test_delete_unavailable_item(client: TestClient, header: dict):
-    id = uuid4()
-    r = client.delete(f"/items/{id}", headers=header)
+    uuid = uuid4()
+    r = client.delete(f"/items/{uuid}", headers=header)
     assert r.status_code == 404
     data = r.json()
-    assert data["detail"] == f"Work Item {id} NOT FOUND!"
+    assert data["detail"] == f"Work Item {uuid} NOT FOUND!"

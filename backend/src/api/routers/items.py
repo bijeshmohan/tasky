@@ -19,9 +19,16 @@ router = APIRouter(
 @router.post("/", response_model=ItemRead, status_code=201)
 async def create(
     item: ItemCreate,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    user: Session = Depends(get_current_user)
 ):
-    item = Item.model_validate(item)
+    item = Item(
+        summary=item.summary,
+        description=item.description,
+        priority=item.priority,
+        due=item.due,
+        uid=user.id
+    )
     session.add(item)
     session.commit()
     session.refresh(item)
@@ -48,19 +55,23 @@ async def read(
     return items
 
 
-@router.get("/{id}", response_model=ItemRead, status_code=200)
-async def read(id: UUID, session: Session = Depends(get_session)):
-    item = session.get(Item, id)
+@router.get("/{uuid}", response_model=ItemRead, status_code=200)
+async def read(uuid: UUID, session: Session = Depends(get_session)):
+    statement = select(Item).where(Item.uuid == uuid)
+    item = session.exec(statement).first()
+    # FIXME: check if the user has access to this item
     if not item:
-        raise HTTPException(status_code=404, detail=f"Work Item {id} NOT FOUND!")
+        raise HTTPException(status_code=404, detail=f"Work Item {uuid} NOT FOUND!")
     return item
 
 
-@router.patch("/{id}", response_model=ItemRead, status_code=200)
-async def update(id: UUID, update: ItemUpdate, session: Session = Depends(get_session)):
-    item = session.get(Item, id)
+@router.patch("/{uuid}", response_model=ItemRead, status_code=200)
+async def update(uuid: UUID, update: ItemUpdate, session: Session = Depends(get_session)):
+    statement = select(Item).where(Item.uuid == uuid)
+    item = session.exec(statement).first()
+    # FIXME: check if the user has access to this item
     if not item:
-        raise HTTPException(status_code=404, detail=f"Work Item {id} NOT FOUND!")
+        raise HTTPException(status_code=404, detail=f"Work Item {uuid} NOT FOUND!")
 
     data = update.model_dump(exclude_unset=True)
     for key, value in data.items():
@@ -73,11 +84,13 @@ async def update(id: UUID, update: ItemUpdate, session: Session = Depends(get_se
     return item
 
 
-@router.delete("/{id}", status_code=204)
-async def delete(id: UUID, session: Session = Depends(get_session)):
-    item = session.get(Item, id)
+@router.delete("/{uuid}", status_code=204)
+async def delete(uuid: UUID, session: Session = Depends(get_session)):
+    statement = select(Item).where(Item.uuid == uuid)
+    item = session.exec(statement).first()
+    # FIXME: check if the user has access to this item
     if not item:
-        raise HTTPException(status_code=404, detail=f"Work Item {id} NOT FOUND!")
+        raise HTTPException(status_code=404, detail=f"Work Item {uuid} NOT FOUND!")
     
     session.delete(item)
     session.commit()
