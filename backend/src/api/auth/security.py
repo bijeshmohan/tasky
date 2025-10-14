@@ -16,8 +16,10 @@ context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 @overload
 def verify(password: str, hashword: str) -> bool: ...
 
+
 @overload
 def verify(token: str) -> str | None: ...
+
 
 def verify(arg1: str, arg2: str | None = None) -> bool | str | None:
     if arg2:

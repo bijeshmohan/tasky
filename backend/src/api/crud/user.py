@@ -3,16 +3,7 @@ from uuid import UUID
 from sqlmodel import Session, select
 from ..models.user import User
 from ..schemas.user import UserCreate, UserUpdate
-from ..auth.security import hashword, verify
-
-
-def get_user_by_username(db: Session, username: str) -> User | None:
-    statement = select(User).where(User.username == username)
-    return db.exec(statement).first() 
-
-
-def get_user_by_id(db: Session, uid: UUID) -> User | None:
-    return db.get(User, uid)
+from ..auth.security import hashword
 
 
 def create_user(db: Session, data: UserCreate) -> User:
@@ -26,15 +17,13 @@ def create_user(db: Session, data: UserCreate) -> User:
     return user
 
 
-def authenticate_user(
-    db: Session,
-    username: str,
-    password: str
-) -> User | None:
-    user = get_user_by_username(db, username)
-    if not user or not verify(password, user.hashword):
-        return None
-    return user
+def get_user_by_username(db: Session, username: str) -> User | None:
+    statement = select(User).where(User.username == username)
+    return db.exec(statement).first()
+
+
+def get_user_by_id(db: Session, uid: UUID) -> User | None:
+    return db.get(User, uid)
 
 
 def update_user(
