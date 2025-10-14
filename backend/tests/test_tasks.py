@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from api.common import Status, Priority
+from api.common import Priority
 from api.schemas.task import TaskRead
 
 
@@ -74,7 +74,7 @@ def test_create_task_with_mandatory_fields(client: TestClient, endpoint: str, he
     assert validated.description is None
     assert validated.priority == Priority.MEDIUM
     assert validated.due is None
-    assert validated.status == Status.TODO
+    assert validated.done == False
 
 
 def test_create_task_with_optional_fields(client: TestClient, endpoint: str, header: dict):
@@ -98,7 +98,7 @@ def test_create_task_with_optional_fields(client: TestClient, endpoint: str, hea
     assert validated.description == description
     assert validated.priority == Priority.HIGH
     assert validated.due == datetime.fromisoformat(due)
-    assert validated.status == Status.TODO
+    assert validated.done == False
 
 
 def test_read_task(client: TestClient, endpoint: str, task: dict, header: dict):
@@ -110,7 +110,7 @@ def test_read_task(client: TestClient, endpoint: str, task: dict, header: dict):
     assert validated.description == task["description"]
     assert validated.priority == Priority(task["priority"])
     assert validated.due == (datetime.fromisoformat(task["due"]) if task["due"] else None)
-    assert validated.status == Status(task["status"])
+    assert validated.done == task["done"]
     assert validated.created == datetime.fromisoformat(task["created"])
 
 
@@ -134,7 +134,7 @@ def test_read_tasks(client: TestClient, endpoint: str, tasks: list[dict], header
         assert validated.description == task["description"]
         assert validated.priority == Priority(task["priority"])
         assert validated.due == (datetime.fromisoformat(task["due"]) if task["due"] else None)
-        assert validated.status == Status(task["status"])
+        assert validated.done == task["done"]
         assert validated.created == datetime.fromisoformat(task["created"])
 
 

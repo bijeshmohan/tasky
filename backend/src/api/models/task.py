@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 
 from sqlmodel import SQLModel, Field
 
-from ..common import Priority, Status
+from ..common import Priority
 
 
 class Task(SQLModel, table=True):
@@ -14,6 +14,6 @@ class Task(SQLModel, table=True):
     priority: Priority = Field(default=Priority.MEDIUM, index=True)
     due: datetime | None = Field(default=None)
     created: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    status: Status = Field(default=Status.TODO)
+    done: bool = Field(default=False)
 
     uid: UUID = Field(foreign_key="user.id")
