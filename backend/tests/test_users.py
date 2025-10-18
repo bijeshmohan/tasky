@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from api.schemas.user import UserRead
+from backend.schemas.user import UserRead
 
 
 def test_signup_with_valid_username_and_strong_password(client: TestClient):

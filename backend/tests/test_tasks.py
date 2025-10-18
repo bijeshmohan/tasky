@@ -4,8 +4,8 @@ from uuid import UUID, uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from api.common import Priority
-from api.schemas.task import TaskRead
+from backend.common import Priority
+from backend.schemas.task import TaskRead
 
 
 @pytest.fixture

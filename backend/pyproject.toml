@@ -1,5 +1,5 @@
 [project]
-name = "api"
+name = "backend"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -14,11 +14,10 @@ dependencies = [
     "sqlmodel>=0.0.25",
 ]
 
-[build-system]
-requires = ["uv_build>=0.8.17,<0.9.0"]
-build-backend = "uv_build"
-
 [dependency-groups]
 dev = [
     "pytest>=8.4.2",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
